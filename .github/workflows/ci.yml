@@ -1,0 +1,53 @@
+name: CI Pipeline
+
+on:
+  push:
+    branches: [ develop, main ]
+  pull_request:
+    branches: [ develop ]
+
+jobs:
+  build-test-and-push:
+    runs-on: ubuntu-latest
+    
+    steps:
+      # 1. 下载代码
+      - uses: actions/checkout@v4
+      
+      # 2. 编译代码 (你之前的步骤)
+      - name: Install GCC
+        run: sudo apt-get install -y gcc make
+        
+      - name: Compile
+        run: |
+          gcc -Wall -Wextra -o pokemon main.c
+          echo "编译成功"
+          
+      # 3. 运行测试 (你之前的步骤)
+      - name: Run Unit Tests
+        run: |
+          if [ -f tests/test_runner ]; then
+            ./tests/test_runner
+          else
+            echo "暂无测试文件"
+          fi
+
+      # ==========================================
+      # 4. 登录 Docker Hub (新增步骤)
+      # ==========================================
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      # ==========================================
+      # 5. 构建并推送镜像 (新增步骤)
+      # ==========================================
+      - name: Build and Push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          # 这里的地址格式：你的用户名/仓库名:标签
+          tags: guoxuebo/team111:latest

@@ -1,0 +1,188 @@
+openapi: "3.0.3"
+info:
+  title: 宝可梦对战系统API
+  version: "2.0.0"
+description: 回合制宝可梦对战后端接口
+servers:
+  - url: http://localhost:8080/api/v1
+paths:
+  /pokemons:
+    get:
+      summary: 获取可选宝可梦列表
+      operationId: listPokemons
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Pokemon'
+  /pokemons/{id}:
+    get:
+      summary: 获取单个宝可梦详情
+      operationId: getPokemon
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Pokemon'
+  /battles:
+    post:
+      summary: 创建新战斗
+      operationId: createBattle
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BattleRequest'
+      responses:
+        '201':
+          description: 战斗创建成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Battle'
+  /battles/{id}/turn:
+    post:
+      summary: 执行回合
+      operationId: executeTurn
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TurnRequest'
+      responses:
+        '200':
+          description: 回合结果
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TurnResult'
+components:
+  schemas:
+    Pokemon:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: "皮卡丘"
+        type:
+          type: string
+          enum: [ELECTRIC, FIRE, WATER, GRASS]
+          example: ELECTRIC
+        hp:
+          type: integer
+          example: 100
+        attack:
+          type: integer
+          example: 55
+        defense:
+          type: integer
+          example: 40
+        speed:
+          type: integer
+          example: 90
+        skills:
+          type: array
+          items:
+            $ref: '#/components/schemas/Skill'
+    Skill:
+      type: object
+      properties:
+        name:
+          type: string
+          example: "十万伏特"
+        power:
+          type: integer
+          example: 40
+        accuracy:
+          type: integer
+          example: 90
+        pp:
+          type: integer
+          example: 15
+        type:
+          type: string
+          example: ELECTRIC
+    BattleRequest:
+      type: object
+      properties:
+        player1_pokemon_id:
+          type: integer
+          example: 1
+        player2_pokemon_id:
+          type: integer
+          example: 2
+    Battle:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1001
+        player1:
+          $ref: '#/components/schemas/Pokemon'
+        player2:
+          $ref: '#/components/schemas/Pokemon'
+        turn:
+          type: integer
+          example: 1
+        status:
+          type: string
+          enum: [ACTIVE, FINISHED]
+    TurnRequest:
+      type: object
+      properties:
+        player1_skill_index:
+          type: integer
+          example: 0
+        player2_skill_index:
+          type: integer
+          example: 2
+    TurnResult:
+      type: object
+      properties:
+        turn:
+          type: integer
+          example: 2
+        player1_action:
+          type: object
+          properties:
+            skill:
+              type: string
+            damage:
+              type: integer
+            is_crit:
+              type: boolean
+        player2_action:
+          type: object
+          properties:
+            skill:
+              type: string
+            damage:
+              type: integer
+            is_crit:
+              type: boolean
+        battle_status:
+          type: string
+          enum: [ACTIVE, PLAYER1_WIN, PLAYER2_WIN, DRAW]
