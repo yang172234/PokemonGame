@@ -1,0 +1,141 @@
+@startuml
+!define RECTANGLE class
+
+title 宝可梦对战游戏系统架构图
+
+' ========== 顶层模块 ==========
+package "用户界面层" {
+    [控制台输出] as Console
+    [颜色显示模块] as Color
+}
+
+package "业务逻辑层" {
+    
+    package "战斗引擎" {
+        [战斗流程控制] as BattleFlow
+        [伤害计算] as DamageCalc
+        [命中判定] as HitCheck
+        [暴击判定] as CritCheck
+        [状态异常处理] as StatusHandler
+        [回合控制] as TurnControl
+    }
+    
+    package "宝可梦管理" {
+        [宝可梦创建] as PokemonCreator
+        [技能管理] as SkillManager
+        [属性信息展示] as PokemonDisplay
+    }
+    
+    package "AI系统" {
+        [AI决策引擎] as AIEngine
+        [技能选择策略] as AISkillSelect
+    }
+}
+
+package "数据层" {
+    [属性克制表] as TypeChart
+    [宝可梦数据库] as PokemonDB
+    [技能数据库] as SkillDB
+}
+
+' ========== 数据结构 ==========
+package "数据结构定义" {
+    class "Pokemon" <<struct>> {
+        +name: char[]
+        +max_hp: int
+        +current_hp: int
+        +attack: int
+        +defense: int
+        +speed: int
+        +level: int
+        +status: StatusCondition
+        +skills: Skill[4]
+    }
+    
+    class "Skill" <<struct>> {
+        +name: char[]
+        +power: int
+        +accuracy: int
+        +pp: int
+        +max_pp: int
+        +type: PokemonType
+        +status_chance: int
+        +status: StatusCondition
+        +crit_rate: int
+    }
+    
+    class "Battle" <<struct>> {
+        +p1: Pokemon
+        +p2: Pokemon
+        +turn: int
+        +state: BattleState
+        +result: BattleResult
+    }
+    
+    enum "PokemonType" {
+        NORMAL
+        FIRE
+        WATER
+        GRASS
+        ELECTRIC
+        ...
+    }
+    
+    enum "StatusCondition" {
+        NONE
+        SLEEP
+        PARALYZE
+        POISON
+        BURN
+    }
+}
+
+' ========== 依赖关系 ==========
+BattleFlow --> Pokemon
+BattleFlow --> Skill
+BattleFlow --> Battle
+BattleFlow --> DamageCalc
+BattleFlow --> StatusHandler
+BattleFlow --> TurnControl
+
+DamageCalc --> TypeChart
+DamageCalc --> CritCheck
+
+AIEngine --> AISkillSelect
+AIEngine --> DamageCalc
+
+PokemonCreator --> PokemonDB
+SkillManager --> SkillDB
+
+Console --> Color
+BattleFlow --> Console
+PokemonDisplay --> Console
+
+' ========== 模块依赖说明 ==========
+note right of BattleFlow
+    核心战斗循环：
+    1. 显示战斗信息
+    2. 玩家选择技能
+    3. AI选择技能
+    4. 速度判定出手顺序
+    5. 执行攻击
+    6. 状态效果处理
+    7. 胜负判定
+end note
+
+note right of DamageCalc
+    伤害计算流程：
+    1. 命中判定
+    2. 基础伤害 = 攻击力×技能威力/防御力
+    3. 属性克制修正
+    4. 暴击修正(1.5倍)
+    5. 随机波动(0.85-1.0)
+    6. 状态影响(烧伤减半)
+end note
+
+note bottom of TypeChart
+    18种属性克制关系表
+    支持2x有效、0.5x抵抗、0x免疫
+end note
+
+@enduml
