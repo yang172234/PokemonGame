@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>选择宝可梦</title>
+</head>
+<body>
+    <h1>宝可梦选择页面</h1>
+    <div id="list"></div>
+
+    <script>
+        fetch("http://127.0.0.1:4010/pokemons")
+        .then(res => res.json())
+        .then(data => {
+            console.log(data);
+            document.getElementById("list").innerHTML =
+                "成功加载宝可梦：" + data[0].name;
+        })
+    </script>
+</body>
+</html>

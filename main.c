@@ -2,7 +2,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#include <windows.h>
 
 #define MAX_SKILLS 4
 #define NAME_LENGTH 32
@@ -779,56 +778,130 @@ void run_battle(Battle* b) {
     }
 }
 
-int main() {
-    Pokemon player1, player2;
-    Battle battle;
-    
-    // 初始化随机数种子
+// 根据ID初始化宝可梦
+void init_pokemon_by_id(Pokemon* p, int id, int level) {
+    switch(id) {
+        case 1: create_pikachu(p, level); break;
+        case 2: create_charizard(p, level); break;
+        case 3: create_blastoise(p, level); break;
+        case 4: create_venusaur(p, level); break;
+        case 5: create_zapdos(p, level); break;
+        case 6: create_mewtwo(p, level); break;
+        case 7: create_gengar(p, level); break;
+        case 8: create_dragonite(p, level); break;
+        case 9: create_gyarados(p, level); break;
+    }
+}
+
+// 计算伤害（用你原有的伤害公式即可，这里给一个通用模板）
+int calculate_damage(Pokemon* attacker, Pokemon* defender, Skill* skill) {
+    if (rand() % 100 >= skill->accuracy) {
+        return 0; // 未命中
+    }
+    int damage = (skill->power * attacker->attack) / defender->defense;
+    damage += rand() % 5; // 随机波动
+    return damage > 0 ? damage : 1; // 至少1点伤害
+}
+
+int main(int argc, char *argv[]) {
+   // SetConsoleOutputCP(65001);
+    //SetConsoleCP(65001);
     srand((unsigned int)time(NULL));
-    
-    // 初始化属性克制表
-    init_type_chart();
 
-    printf(COLOR_BOLD "\n=== 宝可梦对战游戏 v2.0 ===" COLOR_RESET "\n");
-    printf("新增功能：属性克制 | 状态异常 | PP 值 | 暴击系统\n\n");
+    if (argc < 2) {
+        printf("用法：\n");
+        printf("初始化：pokemon.exe init [1-9]\n");
+        printf("对战：pokemon.exe fight [精灵] [招式] [玩家血量] [敌方血量]\n");
+        return 1;
+    }
 
-    int p1_choice = select_pokemon();
-    int level = 5;  // 初始等级
-    
-    if (p1_choice == 1) create_pikachu(&player1, level);
-    else if (p1_choice == 2) create_charizard(&player1, level);
-    else if (p1_choice == 3) create_blastoise(&player1, level);
-    else if (p1_choice == 4) create_venusaur(&player1, level);
-    else if (p1_choice == 5) create_zapdos(&player1, level);
-    else if (p1_choice == 6) create_mewtwo(&player1, level);
-    else if (p1_choice == 7) create_gengar(&player1, level);
-    else if (p1_choice == 8) create_dragonite(&player1, level);
-    else create_gyarados(&player1, level);
+    // ===================== 初始化（英文格式，前端能正常解析） =====================
+    if (strcmp(argv[1], "init") == 0 && argc == 3) {
+        int pid = atoi(argv[2]);
+        Pokemon p, e;
 
-    int p2_choice = (rand() % 9) + 1;
-    if (p2_choice == 1) create_pikachu(&player2, level);
-    else if (p2_choice == 2) create_charizard(&player2, level);
-    else if (p2_choice == 3) create_blastoise(&player2, level);
-    else if (p2_choice == 4) create_venusaur(&player2, level);
-    else if (p2_choice == 5) create_zapdos(&player2, level);
-    else if (p2_choice == 6) create_mewtwo(&player2, level);
-    else if (p2_choice == 7) create_gengar(&player2, level);
-    else if (p2_choice == 8) create_dragonite(&player2, level);
-    else create_gyarados(&player2, level);
+        init_pokemon_by_id(&p, pid, 5);
 
-    printf("\n" COLOR_CYAN "玩家 1 选择了：" COLOR_RESET "%s (Lv.%d)\n", player1.name, player1.level);
-    printf(COLOR_MAGENTA "玩家 2 选择了：" COLOR_RESET "%s (Lv.%d)\n", player2.name, player2.level);
+        int eid;
+        do { eid = rand() % 9 + 1; } while (eid == pid);
+        init_pokemon_by_id(&e, eid, 5);
 
-    battle.p1 = player1;
-    battle.p2 = player2;
-    battle.turn = 1;
+        printf("PNAME=%s\n", p.name);
+        printf("PHP=%d\n", p.max_hp);
+        printf("PATK=%d\n", p.attack);
+        printf("PDEF=%d\n", p.defense);
+        printf("PSPD=%d\n", p.speed);
 
-    run_battle(&battle);
+        printf("EMYNAME=%s\n", e.name);
+        printf("EMYHP=%d\n", e.max_hp);
+        printf("EMYATK=%d\n", e.attack);
+        printf("EMYDEF=%d\n", e.defense);
+        printf("EMYSPD=%d\n", e.speed);
 
-    printf("\n" COLOR_BOLD "=== 战斗结束 ===" COLOR_RESET "\n");
-    printf("\n按回车键退出...");
-    while (getchar() != '\n');
-    getchar();
+        for (int i = 0; i < 4; i++) {
+            printf("SKILL%d=%s|威力:%d|命中:%d%%|PP:%d/%d\n",
+                i+1,
+                p.skills[i].name,
+                p.skills[i].power,
+                p.skills[i].accuracy,
+                p.skills[i].pp,
+                p.skills[i].max_pp);
+        }
+        return 0;
+    }
 
-    return 0;
+    // ===================== 对战（英文格式，前端绝对正常） =====================
+    if (strcmp(argv[1], "fight") == 0 && argc == 6) {
+        int pid = atoi(argv[2]);
+        int skill = atoi(argv[3]) - 1;
+        int php = atoi(argv[4]);
+        int ehp = atoi(argv[5]);
+
+        Pokemon p, e;
+        init_pokemon_by_id(&p, pid, 5);
+
+        int eid;
+        do { eid = rand() % 9 + 1; } while (eid == pid);
+        init_pokemon_by_id(&e, eid, 5);
+
+        // 玩家攻击
+        int dmg_e = calculate_damage(&p, &e, &p.skills[skill]);
+        ehp -= dmg_e;
+        if (ehp < 0) ehp = 0;
+
+        // 电脑攻击
+        int ai_skill = rand() % 4;
+        int dmg_p = calculate_damage(&e, &p, &e.skills[ai_skill]);
+        php -= dmg_p;
+        if (php < 0) php = 0;
+
+        int over = 0;
+        char win[20] = "";
+
+        if (php <= 0 && ehp <= 0) {
+            over = 1;
+            strcpy(win, "平局");
+        } else if (php <= 0) {
+            over = 1;
+            strcpy(win, "敌方胜利");
+        } else if (ehp <= 0) {
+            over = 1;
+            strcpy(win, "玩家胜利");
+        }
+
+        // 输出前端能解析的英文格式
+        printf("PATTACK=%s\n", p.skills[skill].name);
+        printf("EMY_DMG=%d\n", dmg_e);
+        printf("EMYATTACK=%s\n", e.skills[ai_skill].name);
+        printf("P_DMG=%d\n", dmg_p);
+        printf("NEW_PHP=%d\n", php);
+        printf("NEW_EMYHP=%d\n", ehp);
+        printf("OVER=%d\n", over);
+        printf("WIN=%s\n", win);
+
+        return 0;
+    }
+
+    printf("参数错误\n");
+    return 1;
 }
