@@ -940,4 +940,8 @@ export default {
     grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
   }
 }
+<<<<<<< HEAD
 </style>
+=======
+</style>
+>>>>>>> 4b673a7e28cb4896c4ddd1800bc42a978bc06381
